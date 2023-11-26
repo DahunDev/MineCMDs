@@ -1,0 +1,15 @@
+name: MineCMD
+main: net.daniel.cmds.main.Main
+version: 1.5
+depend: [Essentials,Vault]
+
+commands:
+  minecmd:
+    permission: MineCMD.reload
+  확성기:
+  허기설정:
+  밥:
+  채팅금지조회:
+    aliases: [채팅금지확인, 뮤트조회, 뮤트확인, 채팅금지남은시간]
+  head:
+    permission: MineCMD.head

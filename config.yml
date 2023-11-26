@@ -1,0 +1,55 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+broad_Cooltime: 20
+
+#Default price
+broad_price: 2500.0
+feed_price: 7500.0
+set_hunger_price: 4500.0
+
+#권한별 가격 적용
+usePermPrice: true
+
+
+head:
+  check_Name_exist: true
+  excute_cmd_head:
+    on_fail_givehead: true
+  stacktrace: false
+    
+#%player%는 머리를 받을 플레이어 이름
+#%uuid%는 머리를 받을 플레이어의 uuid%
+#%cmd%는 명령어 전체, /kitecmd:head <인자값들>
+    
+  fail_CMD:
+  - '/say %player% failed to get head'
+  - '/say %uuid% to get head'
+  - '/say failed cmd: %cmd%'
+
+
+
+#계급별 가격 적용 등에 사용됨 
+# "'펄미션' : 가격"
+# 펄미션은 오름차순 정렬로 적어야 함(낮은 계급의 펄미션 ~ 높은 계급의 펄미션)
+# 펄미션별 가격 부분만 수정가능, "밥:" 해당 부분 수정시 해당 항목의 가격과 펄미션 설정 무시
+
+#  - '"Mine''Group.mid" :5000.0' -> "Mine'Group.mid" :5000.0
+Price-by-Permission:
+  밥:
+  - '"MineGroup.mid":8000.0'
+  - '"MineGroup.midup":8500.0'
+  - '"MineGroup.rich":9250.0'
+  - '"MineGroup.richest":11500.0'
+  확성기:
+  - '"MineGroup.mid":3000.0'
+  - '"MineGroup.midup":3500'
+  - '"MineGroup.rich":4250.0'
+  - '"MineGroup.richest":5500.0'
+  
+  허기설정:
+  - '"MineGroup.mid":5000.0'
+  - '"MineGroup.midup":5500.0'
+  - '"MineGroup.rich":6000.0:'
+  - '"MineGroup.richest":7000.0'
+  
+
