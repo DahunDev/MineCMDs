@@ -17,7 +17,7 @@ public class setHungerCommand implements CommandExecutor {
 
         // 현재 포만감 지수보다 높게는 불가능
 
-        if (!sender instanceof Player) {
+        if (!(sender instanceof Player)) {
             System.out.println(Lang.INGAME_ONLY.toString());
             return false;
         }

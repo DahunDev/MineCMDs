@@ -11,7 +11,6 @@ import net.daniel.cmds.main.Main;
 
 public class FeedCommand implements CommandExecutor {
 
-
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 

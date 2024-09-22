@@ -19,7 +19,6 @@ import net.daniel.cmds.main.Main.PlayerDataHolder;
 
 public class broadcastCommand implements CommandExecutor {
 
-
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
