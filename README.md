@@ -1,2 +1,2 @@
 # MineCMDs
-Adding some minecraft commands ( some price of command is depends on the player's group level)
+Adding Minecraft commands (with some command prices depending on the player's group level).
