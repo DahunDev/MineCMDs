@@ -231,7 +231,7 @@ public class HeadCommand implements CommandExecutor {
                 }).runTaskAsynchronously(Main.plugin);
             }
 
-        } else if (sender instanceof Player player) {
+        } else if (sender instanceof Player) {
 
             if (args.length == 0) {
 

@@ -23,7 +23,7 @@ public class broadcastCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
 
-        if (!(sender instanceof Player player)) {
+        if (!(sender instanceof Player)) {
             System.out.println(Lang.INGAME_ONLY);
             return false;
         }
