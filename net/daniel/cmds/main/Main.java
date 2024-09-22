@@ -1,4 +1,3 @@
-
 package net.daniel.cmds.main;
 
 import java.io.File;
@@ -45,388 +44,380 @@ import net.daniel.cmds.Utils.ThrowsRunnable;
 import net.milkbowl.vault.economy.Economy;
 
 public class Main extends JavaPlugin implements Listener {
-	private final FileConfiguration langConfig = new YamlConfiguration();
-
-	public final Logger logger;
-	public static Command cmds;
-	public static Economy Eco;
-	public static Essentials essentials;
+    private final FileConfiguration langConfig = new YamlConfiguration();
+
+    public final Logger logger;
+    public static Command cmds;
+    public static Economy Eco;
+    public static Essentials essentials;
 
-	public static int broad_Cooltime = 20;
-	public static double broad_price = 2500.0;
+    public static int broad_Cooltime = 20;
+    public static double broad_price = 2500.0;
 
-	public static double feed_price = 7500.0;
-	public static double set_hunger_price = 4500.0;
-	public static boolean usePermPrice = true;
+    public static double feed_price = 7500.0;
+    public static double set_hunger_price = 4500.0;
+    public static boolean usePermPrice = true;
 
-	public static boolean head_check_name = true;
-	public static boolean excute_cmd_on_fail_givehead = true;
+    public static boolean head_check_name = true;
+    public static boolean excute_cmd_on_fail_givehead = true;
 
-	public static List<Double> feed_price_group = new ArrayList<Double>();
-	public static List<Double> broad_price_group = new ArrayList<Double>();
-	public static List<Double> hunger_price_group = new ArrayList<Double>();
-
-	public static List<String> feed_perm_group = new ArrayList<String>();
-	public static List<String> broad_perm_group = new ArrayList<String>();
-	public static List<String> hunger_perm_group = new ArrayList<String>();
-
-	public static List<String> cmds_on_fail_givehead;
-
-	private static String pluginName;
-	private static HashMap<String, PlayerDataHolder> data = new HashMap<String, PlayerDataHolder>();
-	public static Main plugin;
-
-	public Main() {
-		this.logger = Logger.getLogger("Minecraft");
-		plugin = this;
-
-	}
-
-	@Override
-	public void onDisable() {
-		final PluginDescriptionFile pdFile = this.getDescription();
-		data.clear();
-		System.out.println(String.valueOf(pdFile.getName()) + pdFile.getVersion() + "ÀÌ(°¡) ºñÈ°¼ºÈ­ µÇ¾ú½À´Ï´Ù.");
-	}
+    public static List<Double> feed_price_group = new ArrayList<Double>();
+    public static List<Double> broad_price_group = new ArrayList<Double>();
+    public static List<Double> hunger_price_group = new ArrayList<Double>();
+
+    public static List<String> feed_perm_group = new ArrayList<String>();
+    public static List<String> broad_perm_group = new ArrayList<String>();
+    public static List<String> hunger_perm_group = new ArrayList<String>();
+
+    public static List<String> cmds_on_fail_givehead;
+
+    private static String pluginName;
+    private static HashMap<String, PlayerDataHolder> data = new HashMap<String, PlayerDataHolder>();
+    public static Main plugin;
+
+    public Main() {
+        this.logger = Logger.getLogger("Minecraft");
+        plugin = this;
 
-	@Override
-	public void onEnable() {
+    }
 
-		Plugin essentialsPlugin = Bukkit.getPluginManager().getPlugin("Essentials");
+    @Override
+    public void onDisable() {
+        final PluginDescriptionFile pdFile = this.getDescription();
+        data.clear();
+        System.out.println(String.valueOf(pdFile.getName()) + pdFile.getVersion() + "ì´(ê°€) ë¹„í™œì„±í™” ë˜ì—ˆìŠµë‹ˆë‹¤.");
+    }
 
-		Main.essentials = (Essentials) essentialsPlugin;
-		this.reloadConfiguration();
+    @Override
+    public void onEnable() {
 
-		final PluginDescriptionFile pdFile = this.getDescription();
-		Main.pluginName = pdFile.getName();
-		if (!this.SetupEconomy()) {
-			Bukkit.getConsoleSender().sendMessage("¡×6¡×l[ Mine CMD ] ¡×c¡×lEconomy ¡×fÇÃ·¯±×ÀÎÀÌ ÀÎ½ÄµÇÁö ¾Ê¾ÒÀ¸¹Ç·Î, ºñÈ°¼ºÈ­ µË´Ï´Ù.");
-			this.getServer().getPluginManager().disablePlugin((Plugin) this);
-			return;
-		}
-
-		this.getCommand("¹ä").setExecutor(new FeedCommand());
-		this.getCommand("Çã±â¼³Á¤").setExecutor(new setHungerCommand());
-		this.getCommand("È®¼º±â").setExecutor(new broadcastCommand());
-		this.getCommand("head").setExecutor(new HeadCommand());
-		this.getCommand("Ã¤ÆÃ±İÁöÁ¶È¸").setExecutor(new checkMuteCommand());
-		this.getCommand("Ã¤ÆÃ±İÁöÁ¶È¸").setAliases(plugin.getCommand("Ã¤ÆÃ±İÁöÁ¶È¸").getAliases());
-
-		for (Player p : getServer().getOnlinePlayers()) {
-			Main.getData().put(p.getUniqueId().toString(), new PlayerDataHolder());
-		}
-
-		getServer().getPluginManager().registerEvents(this, this);
-
-		System.out.println(String.valueOf(pdFile.getFullName() + "ÀÌ(°¡) È°¼ºÈ­ µÇ¾ú½À´Ï´Ù."));
-
-	}
-
-	public static Main get() {
-		return (Main) Bukkit.getPluginManager().getPlugin(pluginName);
-	}
-
-	public File createLangFile() {
-		return new File(getDataFolder(), "lang.yml");
-	}
-
-	private void doInputOutput(ThrowsRunnable runnable, String errorMessage) {
-		try {
-			runnable.run();
-		} catch (FileNotFoundException ex) {
-			// Ignore
-		} catch (Exception ex) {
-			getLogger().log(Level.WARNING, errorMessage, ex);
-		}
-	}
-
-	public FileConfiguration getLangConfig() {
-		return langConfig;
-	}
-
-	public void loadConfigurations() {
-		// saveResource("gui.yml", false);
-		doInputOutput(() -> langConfig.load(createLangFile()), "Exception while lang load.");
-
-	}
-
-	public void saveConfigurations() {
-
-		doInputOutput(() -> langConfig.save(FileUtils.writeEnsure(createLangFile())), "Exception when lang save.");
-	}
-
-	private boolean SetupEconomy() {
-		if (this.getServer().getPluginManager().getPlugin("Vault") == null) {
-			Bukkit.getConsoleSender().sendMessage("¡×6¡×l[ Mine CMD ] ¡×c¡×lVault ¡×fÇÃ·¯±×ÀÎÀÌ ÀÎ½ÄµÇÁö ¾Ê¾ÒÀ¸¹Ç·Î, ¼­¹ö°¡ Á¾·á µË´Ï´Ù.");
-			Bukkit.shutdown();
-			return false;
-		}
-		Bukkit.getConsoleSender().sendMessage("¡×6¡×l[ Mine CMD ] ¡×a¡×lVault ¡×fÇÃ·¯±×ÀÎÀÌ ÀÎ½Ä µÇ¾ú½À´Ï´Ù.");
-		RegisteredServiceProvider<Economy> EconomyProvider = this.getServer().getServicesManager()
-				.getRegistration(Economy.class);
-		if (EconomyProvider != null) {
-			Eco = (Economy) EconomyProvider.getProvider();
-		}
-		if (Eco != null) {
-			return true;
-		}
-		return false;
-	}
-
-	public static String getPerm(String arg) {
-
-		String temp = arg.substring(0, arg.lastIndexOf(":"));
-		return temp.substring(1, temp.length() - 1);
-
-	}
-
-	public static double getPrice(String arg) {
-
-		String[] temp = arg.split(":");
-
-		return Double.parseDouble(temp[temp.length - 1]);
-
-	}
-
-	public File createConfigFile() {
-		return new File(getDataFolder(), "config.yml");
-	}
-
-	public void reloadConfiguration() {
-		PluginDescriptionFile pdFile = this.getDescription();
-		File config = new File("plugins/" + pdFile.getName() + "/config.yml");
-		if (config.exists()) {
-			YamlConfiguration cfg = YamlConfiguration.loadConfiguration(config);
-			this.saveDefaultConfig();
-			for (String key : cfg.getConfigurationSection("").getKeys(true)) {
-				if (!this.getConfig().contains(key)) {
-					this.getConfig().set(key, cfg.get(key));
-				}
-			}
-		} else {
-			this.saveDefaultConfig();
-		}
-		this.reloadConfig();
-
-		Main.usePermPrice = this.getConfig().getBoolean("usePermPrice");
-		Main.feed_price = this.getConfig().getDouble("feed_price");
-		Main.broad_Cooltime = this.getConfig().getInt("broad_Cooltime");
-		Main.broad_price = this.getConfig().getDouble("broad_price");
-		Main.set_hunger_price = this.getConfig().getDouble("set_hunger_price");
-		Main.head_check_name = this.getConfig().getBoolean("head.check_Name_exist");
-		Main.excute_cmd_on_fail_givehead = this.getConfig().getBoolean("head.excute_cmd_head.on_fail_givehead");
-		List<String> feed_priceConfig = this.getConfig().getStringList("Price-by-Permission.¹ä");
-		List<String> broad_priceConfig = this.getConfig().getStringList("Price-by-Permission.È®¼º±â");
-		List<String> hunger_priceConfig = this.getConfig().getStringList("Price-by-Permission.Çã±â¼³Á¤");
-		Main.cmds_on_fail_givehead = this.getConfig().getStringList("head.fail_CMD");
+        Plugin essentialsPlugin = Bukkit.getPluginManager().getPlugin("Essentials");
 
-		for (String i : feed_priceConfig) {
-			Main.feed_perm_group.add(getPerm(i));
-			Main.feed_price_group.add(getPrice(i));
+        Main.essentials = (Essentials) essentialsPlugin;
+        this.reloadConfiguration();
 
-		}
+        final PluginDescriptionFile pdFile = this.getDescription();
+        Main.pluginName = pdFile.getName();
+        if (!this.SetupEconomy()) {
+            Bukkit.getConsoleSender().sendMessage("Â§6Â§l[ Mine CMD ] Â§cÂ§lEconomy Â§fí”ŒëŸ¬ê·¸ì¸ì´ ì¸ì‹ë˜ì§€ ì•Šì•˜ìœ¼ë¯€ë¡œ, ë¹„í™œì„±í™” ë©ë‹ˆë‹¤.");
+            this.getServer().getPluginManager().disablePlugin((Plugin) this);
+            return;
+        }
+
+        this.getCommand("ë°¥").setExecutor(new FeedCommand());
+        this.getCommand("í—ˆê¸°ì„¤ì •").setExecutor(new setHungerCommand());
+        this.getCommand("í™•ì„±ê¸°").setExecutor(new broadcastCommand());
+        this.getCommand("head").setExecutor(new HeadCommand());
+        this.getCommand("ì±„íŒ…ê¸ˆì§€ì¡°íšŒ").setExecutor(new checkMuteCommand());
+        this.getCommand("ì±„íŒ…ê¸ˆì§€ì¡°íšŒ").setAliases(plugin.getCommand("ì±„íŒ…ê¸ˆì§€ì¡°íšŒ").getAliases());
+
+        for (Player p : getServer().getOnlinePlayers()) {
+            Main.getData().put(p.getUniqueId().toString(), new PlayerDataHolder());
+        }
+
+        getServer().getPluginManager().registerEvents(this, this);
+
+        System.out.println(pdFile.getFullName() + "ì´(ê°€) í™œì„±í™” ë˜ì—ˆìŠµë‹ˆë‹¤.");
+
+    }
+
+    public static Main get() {
+        return (Main) Bukkit.getPluginManager().getPlugin(pluginName);
+    }
+
+    public File createLangFile() {
+        return new File(getDataFolder(), "lang.yml");
+    }
+
+    private void doInputOutput(ThrowsRunnable runnable, String errorMessage) {
+        try {
+            runnable.run();
+        } catch (FileNotFoundException ex) {
+            // Ignore
+        } catch (Exception ex) {
+            getLogger().log(Level.WARNING, errorMessage, ex);
+        }
+    }
+
+    public FileConfiguration getLangConfig() {
+        return langConfig;
+    }
+
+    public void loadConfigurations() {
+        // saveResource("gui.yml", false);
+        doInputOutput(() -> langConfig.load(createLangFile()), "Exception while lang load.");
+
+    }
+
+    public void saveConfigurations() {
+
+        doInputOutput(() -> langConfig.save(FileUtils.writeEnsure(createLangFile())), "Exception when lang save.");
+    }
+
+    private boolean SetupEconomy() {
+        if (this.getServer().getPluginManager().getPlugin("Vault") == null) {
+            Bukkit.getConsoleSender().sendMessage("Â§6Â§l[ Mine CMD ] Â§cÂ§lVault Â§fí”ŒëŸ¬ê·¸ì¸ì´ ì¸ì‹ë˜ì§€ ì•Šì•˜ìœ¼ë¯€ë¡œ, ì„œë²„ê°€ ì¢…ë£Œ ë©ë‹ˆë‹¤.");
+            Bukkit.shutdown();
+            return false;
+        }
+        Bukkit.getConsoleSender().sendMessage("Â§6Â§l[ Mine CMD ] Â§aÂ§lVault Â§fí”ŒëŸ¬ê·¸ì¸ì´ ì¸ì‹ ë˜ì—ˆìŠµë‹ˆë‹¤.");
+        RegisteredServiceProvider<Economy> EconomyProvider = this.getServer().getServicesManager()
+                .getRegistration(Economy.class);
+        if (EconomyProvider != null) {
+            Eco = (Economy) EconomyProvider.getProvider();
+        }
+        return Eco != null;
+    }
+
+    public static String getPerm(String arg) {
+
+        String temp = arg.substring(0, arg.lastIndexOf(":"));
+        return temp.substring(1, temp.length() - 1);
+
+    }
+
+    public static double getPrice(String arg) {
+
+        String[] temp = arg.split(":");
+
+        return Double.parseDouble(temp[temp.length - 1]);
+
+    }
+
+    public File createConfigFile() {
+        return new File(getDataFolder(), "config.yml");
+    }
+
+    public void reloadConfiguration() {
+        PluginDescriptionFile pdFile = this.getDescription();
+        File config = new File("plugins/" + pdFile.getName() + "/config.yml");
+        if (config.exists()) {
+            YamlConfiguration cfg = YamlConfiguration.loadConfiguration(config);
+            this.saveDefaultConfig();
+            for (String key : cfg.getConfigurationSection("").getKeys(true)) {
+                if (!this.getConfig().contains(key)) {
+                    this.getConfig().set(key, cfg.get(key));
+                }
+            }
+        } else {
+            this.saveDefaultConfig();
+        }
+        this.reloadConfig();
 
-		for (String i : broad_priceConfig) {
-			Main.broad_perm_group.add(getPerm(i));
-			Main.broad_price_group.add(getPrice(i));
+        Main.usePermPrice = this.getConfig().getBoolean("usePermPrice");
+        Main.feed_price = this.getConfig().getDouble("feed_price");
+        Main.broad_Cooltime = this.getConfig().getInt("broad_Cooltime");
+        Main.broad_price = this.getConfig().getDouble("broad_price");
+        Main.set_hunger_price = this.getConfig().getDouble("set_hunger_price");
+        Main.head_check_name = this.getConfig().getBoolean("head.check_Name_exist");
+        Main.excute_cmd_on_fail_givehead = this.getConfig().getBoolean("head.excute_cmd_head.on_fail_givehead");
+        List<String> feed_priceConfig = this.getConfig().getStringList("Price-by-Permission.ë°¥");
+        List<String> broad_priceConfig = this.getConfig().getStringList("Price-by-Permission.í™•ì„±ê¸°");
+        List<String> hunger_priceConfig = this.getConfig().getStringList("Price-by-Permission.í—ˆê¸°ì„¤ì •");
+        Main.cmds_on_fail_givehead = this.getConfig().getStringList("head.fail_CMD");
 
-		}
+        for (String i : feed_priceConfig) {
+            Main.feed_perm_group.add(getPerm(i));
+            Main.feed_price_group.add(getPrice(i));
 
-		for (String i : hunger_priceConfig) {
+        }
 
-			Main.hunger_perm_group.add(getPerm(i));
-			Main.hunger_price_group.add(getPrice(i));
+        for (String i : broad_priceConfig) {
+            Main.broad_perm_group.add(getPerm(i));
+            Main.broad_price_group.add(getPrice(i));
 
-		}
+        }
 
-		loadConfigurations();
-		Lang.init(langConfig);
-		saveConfigurations();
+        for (String i : hunger_priceConfig) {
 
-	}
+            Main.hunger_perm_group.add(getPerm(i));
+            Main.hunger_price_group.add(getPrice(i));
 
-	public static boolean isNumber(String string) {
-		try {
-			Integer.parseInt(string);
-			return true;
-		} catch (Exception exception) {
-			return false;
-		}
-	}
+        }
 
-	public static void broadcast(String msg, Player sender) {
+        loadConfigurations();
+        Lang.init(langConfig);
+        saveConfigurations();
 
-		Set<Player> outList = new HashSet<>();
+    }
 
-		for (Player player : Bukkit.getOnlinePlayers()) {
-			final User onlineUser = essentials.getUser(player);
-			final User send = essentials.getUser(sender);
+    public static boolean isNumber(String string) {
+        try {
+            Integer.parseInt(string);
+            return true;
+        } catch (Exception exception) {
+            return false;
+        }
+    }
 
-			if (!(onlineUser.isIgnoredPlayer(send))) {
-				outList.add(player);
-			}
-		}
+    public static void broadcast(String msg, Player sender) {
 
-		for (Player onlinePlayer : outList) {
+        Set<Player> outList = new HashSet<>();
 
-			onlinePlayer.sendMessage(msg);
-		}
-		System.out.println(ChatColor.stripColor(msg));
-	}
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            final User onlineUser = essentials.getUser(player);
+            final User send = essentials.getUser(sender);
 
-	// get remaining mute time
+            if (!(onlineUser.isIgnoredPlayer(send))) {
+                outList.add(player);
+            }
+        }
 
-	public static int getMuteTime(String arg) throws NullPointerException {
-		User check = essentials.getUser(arg);
-		long when = 0;
+        for (Player onlinePlayer : outList) {
 
-		if (check.getMuted()) {
-			when = check.getMuteTimeout();
-			if (when == 0) {
-				return -1;
-			}
-		} else {
-			return 0;
-		}
+            onlinePlayer.sendMessage(msg);
+        }
+        System.out.println(ChatColor.stripColor(msg));
+    }
 
-		long remaining = when - System.currentTimeMillis();
-		if (remaining < 0)
-			remaining = 0;
-		int seconds = (int) TimeUnit.SECONDS.convert(remaining, TimeUnit.MILLISECONDS);
+    // get remaining mute time
 
-		return seconds;
+    public static int getMuteTime(String arg) throws NullPointerException {
+        User check = essentials.getUser(arg);
+        long when = 0;
 
-	}
+        if (check.getMuted()) {
+            when = check.getMuteTimeout();
+            if (when == 0) {
+                return -1;
+            }
+        } else {
+            return 0;
+        }
 
-	@EventHandler(priority = EventPriority.LOWEST)
-	public void JoinEvent(PlayerLoginEvent e) {
-		Main.getData().put(e.getPlayer().getUniqueId().toString(), new PlayerDataHolder());
-	}
+        long remaining = when - System.currentTimeMillis();
+        if (remaining < 0)
+            remaining = 0;
+        int seconds = (int) TimeUnit.SECONDS.convert(remaining, TimeUnit.MILLISECONDS);
 
-	public static double getBroadPrice(Player player) {
+        return seconds;
 
-		if (usePermPrice) {
+    }
 
-			for (int i = broad_perm_group.size() - 1; i >= 0; i--) {
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void JoinEvent(PlayerLoginEvent e) {
+        Main.getData().put(e.getPlayer().getUniqueId().toString(), new PlayerDataHolder());
+    }
 
-				if (player.hasPermission(broad_perm_group.get(i))) {
-					return broad_price_group.get(i);
+    public static double getBroadPrice(Player player) {
 
-				}
-			}
+        if (usePermPrice) {
 
-			return broad_price;
+            for (int i = broad_perm_group.size() - 1; i >= 0; i--) {
 
-		} else {
-			return broad_price;
-		}
-	}
+                if (player.hasPermission(broad_perm_group.get(i))) {
+                    return broad_price_group.get(i);
 
-	public double getFeedPrice(Player player) {
+                }
+            }
 
-		if (usePermPrice) {
+            return broad_price;
 
-			for (int i = feed_perm_group.size() - 1; i >= 0; i--) {
+        } else {
+            return broad_price;
+        }
+    }
 
-				if (player.hasPermission(feed_perm_group.get(i))) {
-					return feed_price_group.get(i);
+    public double getFeedPrice(Player player) {
 
-				}
-			}
+        if (usePermPrice) {
 
-			return feed_price;
+            for (int i = feed_perm_group.size() - 1; i >= 0; i--) {
 
-		} else {
-			return feed_price;
-		}
-	}
+                if (player.hasPermission(feed_perm_group.get(i))) {
+                    return feed_price_group.get(i);
 
-	public static double getHungerPrice(Player player) {
+                }
+            }
 
-		if (usePermPrice) {
+            return feed_price;
 
-			for (int i = hunger_perm_group.size() - 1; i >= 0; i--) {
+        } else {
+            return feed_price;
+        }
+    }
 
-				if (player.hasPermission(hunger_perm_group.get(i))) {
-					return hunger_price_group.get(i);
+    public static double getHungerPrice(Player player) {
 
-				}
-			}
+        if (usePermPrice) {
 
-			return set_hunger_price;
+            for (int i = hunger_perm_group.size() - 1; i >= 0; i--) {
 
-		} else {
+                if (player.hasPermission(hunger_perm_group.get(i))) {
+                    return hunger_price_group.get(i);
 
-			return set_hunger_price;
+                }
+            }
 
-		}
-	}
+            return set_hunger_price;
 
-	@Override
-	public boolean onCommand(final CommandSender sender, final Command command, final String commandLabel,
-			final String[] args) {
+        } else {
 
-		if (commandLabel.equalsIgnoreCase("minecmd")) {
-			if (sender.hasPermission("MineCMD.reload")) {
-				if (args.length == 0) {
+            return set_hunger_price;
 
-					sender.sendMessage("¡×b¡×l[ ¡×f¡×lMine CMD ¡×b¡×l] ¡×e/minecmd reload ¡×f: ÇÃ·¯±×ÀÎ ¼³Á¤ ¸®·Îµå");
-					return true;
+        }
+    }
 
-				} else {
-					if (args[0].equalsIgnoreCase("reload")) {
+    @Override
+    public boolean onCommand(final CommandSender sender, final Command command, final String commandLabel,
+                             final String[] args) {
 
-						(new BukkitRunnable() {
-							public void run() {
+        if (!commandLabel.equalsIgnoreCase("minecmd")) {
+            return false;
+        }
 
-								reloadConfiguration();
+        if (!sender.hasPermission("MineCMD.reload")) {
 
-							}
+            sender.sendMessage("Â§bÂ§l[ Â§fÂ§lServer Â§bÂ§l] Â§cê¶Œí•œì´ ì—†ìŠµë‹ˆë‹¤. í•„ìš”í•œ ê¶Œí•œ: MineCMD.reload");
+            return true;
 
-						}).runTaskLaterAsynchronously(this, 0L);
+        }
 
-						sender.sendMessage("¡×b¡×l[ ¡×f¡×lMine CMD ¡×b¡×l] ¡×fÇÃ·¯±×ÀÎ ¼³Á¤ ¸®·Îµå ¿Ï·á");
-						return true;
+        if (args.length == 0) {
 
-					} else {
+            sender.sendMessage("Â§bÂ§l[ Â§fÂ§lMine CMD Â§bÂ§l] Â§e/minecmd reload Â§f: í”ŒëŸ¬ê·¸ì¸ ì„¤ì • ë¦¬ë¡œë“œ");
+            return true;
 
-						sender.sendMessage("¡×b¡×l[ ¡×f¡×lMine CMD ¡×b¡×l] ¡×e/minecmd reload ¡×f: ÇÃ·¯±×ÀÎ ¼³Á¤ ¸®·Îµå");
-						return true;
+        }
+        if (args[0].equalsIgnoreCase("reload")) {
 
-					}
+            (new BukkitRunnable() {
+                public void run() {
 
-				}
+                    reloadConfiguration();
 
-			} else {
+                }
 
-				sender.sendMessage("¡×b¡×l[ ¡×f¡×lServer ¡×b¡×l] ¡×c±ÇÇÑÀÌ ¾ø½À´Ï´Ù. ÇÊ¿äÇÑ ±ÇÇÑ: MineCMD.reload");
-				return true;
+            }).runTaskLaterAsynchronously(this, 0L);
 
-			}
-		}
+            sender.sendMessage("Â§bÂ§l[ Â§fÂ§lMine CMD Â§bÂ§l] Â§fí”ŒëŸ¬ê·¸ì¸ ì„¤ì • ë¦¬ë¡œë“œ ì™„ë£Œ");
+            return true;
 
-		return false;
+        }
 
-	}
+		sender.sendMessage("Â§bÂ§l[ Â§fÂ§lMine CMD Â§bÂ§l] Â§e/minecmd reload Â§f: í”ŒëŸ¬ê·¸ì¸ ì„¤ì • ë¦¬ë¡œë“œ");
+		return true;
 
-	public static HashMap<String, PlayerDataHolder> getData() {
-		return data;
-	}
+    }
 
-	public void setData(HashMap<String, PlayerDataHolder> data) {
-		Main.data = data;
-	}
+    public static HashMap<String, PlayerDataHolder> getData() {
+        return data;
+    }
 
-	public class PlayerDataHolder {
-		public long lastUsedTime = 0L;
+    public void setData(HashMap<String, PlayerDataHolder> data) {
+        Main.data = data;
+    }
 
-		PlayerDataHolder() { // default Constructor
-		}
+    public class PlayerDataHolder {
+        public long lastUsedTime = 0L;
 
-		PlayerDataHolder(long lastUsedTime) {
-			this.lastUsedTime = lastUsedTime;
-		}
+        PlayerDataHolder() { // default Constructor
+        }
 
-	}
+        PlayerDataHolder(long lastUsedTime) {
+            this.lastUsedTime = lastUsedTime;
+        }
+
+    }
 
 }

@@ -9,60 +9,53 @@ import net.daniel.cmds.main.Main;
 
 public class checkMuteCommand implements CommandExecutor {
 
-	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
-		if (sender.hasPermission("MineCMD.muteinfo")) {
+        if (!sender.hasPermission("MineCMD.muteinfo")) {
+            sender.sendMessage(Lang.NO_PERM.toString());
+            return true;
+        }
 
-			if (args.length != 1) {
-				sender.sendMessage( Lang.MUTEINFO_HELP.toString().replaceAll("%cmd%", label)  );
-				return true;
-			} else {
+        if (args.length != 1) {
+            sender.sendMessage(Lang.MUTEINFO_HELP.toString().replaceAll("%cmd%", label));
+            return true;
+        }
 
-				try {
-					int sec = Main.getMuteTime(args[0]); // NPE ¿À·ù °¡´É
+        try {
+            int sec = Main.getMuteTime(args[0]); // NPE Â¿AÂ·u Â°Â¡Â´E
 
-					if (sec == 0) {
-						sender.sendMessage(Lang.PlAYERNOTMUTED.toString().replaceAll("%player%", args[0]));
-						
-						return true;
-					}
+            if (sec == 0) {
+                sender.sendMessage(Lang.PlAYERNOTMUTED.toString().replaceAll("%player%", args[0]));
 
-					if (sec == -1) {
-						sender.sendMessage(Lang.PlAYER_MUTE_INFO_INFITE.toString().replaceAll("%player%", args[0]));
+                return true;
+            }
 
-						return true;
-					}
+            if (sec == -1) {
+                sender.sendMessage(Lang.PlAYER_MUTE_INFO_INFITE.toString().replaceAll("%player%", args[0]));
 
-					int min = sec / 60;
-					sec = sec % 60;
+                return true;
+            }
 
-					int hour = min / 60;
-					min = min % 60;
-					int day = hour / 24;
-					hour = hour % 24;
-					sender.sendMessage(Lang.PlAYER_MUTE_INFO.toString().replaceAll("%player%", args[0]).
-							replaceAll("%day%", day+"").replaceAll("%hour%", hour+"").replaceAll("%min%", min+"").replaceAll("%sec%", sec+"")                   );
+            int min = sec / 60;
+            sec = sec % 60;
 
-					
-					return true;
-
-				} catch (Exception e) {
-					sender.sendMessage(Lang.PlAYERNOTPLAYED.toString().replaceAll("%player%", args[0]));
-					return true;
-				}
-
-			}
-
-		}
-			
-			sender.sendMessage(Lang.NO_PERM.toString());
-			return true;
-		
-	
-		
+            int hour = min / 60;
+            min = min % 60;
+            int day = hour / 24;
+            hour = hour % 24;
+            sender.sendMessage(Lang.PlAYER_MUTE_INFO.toString().replaceAll("%player%", args[0]).
+                    replaceAll("%day%", day + "").replaceAll("%hour%", hour + "").replaceAll("%min%", min + "").replaceAll("%sec%", sec + ""));
 
 
-	}
+            return true;
+
+        } catch (Exception e) {
+            sender.sendMessage(Lang.PlAYERNOTPLAYED.toString().replaceAll("%player%", args[0]));
+            return true;
+        }
+
+
+    }
 
 }

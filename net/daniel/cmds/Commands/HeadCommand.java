@@ -18,270 +18,251 @@ import net.daniel.cmds.main.Main;
 
 public class HeadCommand implements CommandExecutor {
 
-	@SuppressWarnings("deprecation")
-	public OfflinePlayer getOfflinePlayer(String name, Player target) {
+    @SuppressWarnings("deprecation")
+    public OfflinePlayer getOfflinePlayer(String name, Player target) {
 
-		if (name != null) {
-			OfflinePlayer offPlayer = target;
+        if (name == null) {
+            return null;
 
-			if (name.equalsIgnoreCase(target.getName())) {
+        }
+        OfflinePlayer offPlayer = target;
 
-				return offPlayer;
-			}
+        if (name.equalsIgnoreCase(target.getName())) {
 
-			try {
+            return offPlayer;
+        }
 
-				offPlayer = Bukkit.getOfflinePlayer(name); // deprecated ‰çÁö¸¸ »ç¿ë
+        try {
 
-				return offPlayer;
+            offPlayer = Bukkit.getOfflinePlayer(name); // deprecated â€°cAoÂ¸Â¸ â‰«cÂ¿e
 
-			} catch (Exception e) {
+            return offPlayer;
 
-				e.printStackTrace();
-				Main.plugin.getLogger().log(Level.INFO,
-						"method parameters info.  String: " + name + " Player: " + target.getName());
-				return null;
+        } catch (Exception e) {
 
-			}
+            e.printStackTrace();
+            Main.plugin.getLogger().log(Level.INFO,
+                    "method parameters info.  String: " + name + " Player: " + target.getName());
+            return null;
 
-		} else {
-			return null;
-		}
+        }
+    }
 
-	}
+    private void excute_fail_cmd(Player target, String cmd) {
 
-	private void excute_fail_cmd(Player target, String cmd) {
+        if (Main.excute_cmd_on_fail_givehead) {
 
-		if (Main.excute_cmd_on_fail_givehead) {
+            for (String CMD : Main.cmds_on_fail_givehead) {
+                MCUtils.dispatchCommandSync(CMD.replace("/", "").replaceAll("%player%", target.getName())
+                        .replaceAll("%uuid%", target.getUniqueId().toString()).replaceAll("%cmd%", cmd));
+            }
 
-			for (String CMD : Main.cmds_on_fail_givehead) {
-				MCUtils.dispatchCommandSync(CMD.replace("/", "").replaceAll("%player%", target.getName())
-						.replaceAll("%uuid%", target.getUniqueId().toString()).replaceAll("%cmd%", cmd));
-			}
+        }
 
-		}
+    }
 
-	}
+    private boolean isNameExist(String name, Player target) {
+        if (!Main.head_check_name || name.equalsIgnoreCase(target.getName()) || name.equalsIgnoreCase("-default")) {
+            return true;
 
-	private boolean isNameExist(String name, Player target) {
-		if (!Main.head_check_name || name.equalsIgnoreCase(target.getName()) || name.equalsIgnoreCase("-default")) {
-			return true;
+        } else return MCUtils.getUUID(name) != null;
 
-		} else if (MCUtils.getUUID(name) != null) {
-			return true;
-		} else {
+    }
 
-			return false;
-		}
+    private void giveHead(String target_head, Player target, CommandSender sender, boolean silent, boolean giveToOther,
+                          String[] args) {
 
-	}
+        if (silent) {
+            if (!MCUtils.hasEnoughSpace(target)) {
+                target.sendMessage(Lang.NO_SPACE_INVENTORY.toString());
+                excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
+                return;
+            }
+            try {
+                if (!isNameExist(target_head, target)) {
+                    target.sendMessage(Lang.NON_EXIST_NICKNAME.toString().replaceAll("%target_head%", target_head));
+                    excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
+                    return;
+                }
+                OfflinePlayer head = getOfflinePlayer(target_head, target);
 
-	private void giveHead(String target_head, Player target, CommandSender sender, boolean silent, boolean giveToOther,
-			String[] args) {
+                if (head == null) {
 
-		if (silent) {
-			if (MCUtils.hasEnoughSpace(target)) {
+                    target.sendMessage(Lang.FAILED_TO_GIVE_HEAD.toString());
 
-				try {
-					if (isNameExist(target_head, target)) {
+                    excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
+                    return;
+                }
+                if (!target_head.equalsIgnoreCase("-default")) {
+                    target.getInventory().setItem(target.getInventory().firstEmpty(),
+                            MCUtils.setHeadOwner(head, new ItemStack(Material.SKULL_ITEM, 1, (short) 3)));
+                } else {
+                    target.getInventory().setItem(target.getInventory().firstEmpty(),
+                            new ItemStack(Material.SKULL_ITEM, 1, (short) 3));
+                }
 
-						OfflinePlayer head = getOfflinePlayer(target_head, target);
+                target.sendMessage(Lang.GAVE_HEAD.toString().replaceAll("%target_head%", target_head));
+            } catch (Exception e) {
 
-						if (head != null) {
+                if (Main.plugin.getConfig().getBoolean("head.stacktrace", false)) {
 
-							if (!target_head.equalsIgnoreCase("-default")) {
-								target.getInventory().setItem(target.getInventory().firstEmpty(),
-										MCUtils.setHeadOwner(head, new ItemStack(Material.SKULL_ITEM, 1, (short) 3)));
-							} else {
-								target.getInventory().setItem(target.getInventory().firstEmpty(),
-										new ItemStack(Material.SKULL_ITEM, 1, (short) 3));
-							}
+                    e.printStackTrace();
 
-							target.sendMessage(Lang.GAVE_HEAD.toString().replaceAll("%target_head%", target_head));
-						} else {
+                }
 
-							target.sendMessage(Lang.FAILED_TO_GIVE_HEAD.toString());
+                sender.sendMessage(Lang.ERROR_ON_GIVEHEAD.toString());
+                excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
 
-							excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
+            }
 
-						}
 
-					} else {
+        } else {
 
-						target.sendMessage(Lang.NON_EXIST_NICKNAME.toString().replaceAll("%target_head%", target_head));
-						excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
-					}
-				} catch (Exception e) {
+            if (MCUtils.hasEnoughSpace(target)) {
 
-					if (Main.plugin.getConfig().getBoolean("head.stacktrace", false)) {
+                try {
+                    if (!isNameExist(target_head, target)) {
 
-						e.printStackTrace();
+                        target.sendMessage(Lang.NON_EXIST_NICKNAME.toString().replaceAll("%target_head%", target_head));
+                        if (giveToOther) {
+                            sender.sendMessage(
+                                    Lang.NON_EXIST_NICKNAME.toString().replaceAll("%target_head%", target_head));
+                        }
+                        excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
 
-					}
+                        return;
+                    }
 
-					sender.sendMessage(Lang.ERROR_ON_GIVEHEAD.toString());
-					excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
+                    OfflinePlayer head = getOfflinePlayer(target_head, target);
 
-				}
+                    if (head == null) {
+                        target.sendMessage(Lang.FAILED_TO_GIVE_HEAD.toString());
 
-			} else {
-				target.sendMessage(Lang.NO_SPACE_INVENTORY.toString());
-				excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
+                        if (giveToOther) {
+                            sender.sendMessage(Lang.FAILED_TO_GIVE_HEAD.toString());
+                        }
 
-			}
+                        excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
+                        return;
+                    }
 
-		} else {
+                    if (!target_head.equalsIgnoreCase("-default")) {
+                        target.getInventory().setItem(target.getInventory().firstEmpty(),
+                                MCUtils.setHeadOwner(head, new ItemStack(Material.SKULL_ITEM, 1, (short) 3)));
+                    } else {
+                        target.getInventory().setItem(target.getInventory().firstEmpty(),
+                                new ItemStack(Material.SKULL_ITEM, 1, (short) 3));
 
-			if (MCUtils.hasEnoughSpace(target)) {
+                    }
+                    target.sendMessage(Lang.GAVE_HEAD.toString().replaceAll("%target_head%", target_head));
 
-				try {
-					if (isNameExist(target_head, target)) {
+                    if (giveToOther) {
+                        sender.sendMessage(
+                                Lang.GAVE_HEAD_OTHER.toString().replaceAll("%target_head%", target_head)
+                                        .replaceAll("%target%", target.getName()));
+                    }
 
-						OfflinePlayer head = getOfflinePlayer(target_head, target);
 
-						if (head != null) {
-							if (!target_head.equalsIgnoreCase("-default")) {
-								target.getInventory().setItem(target.getInventory().firstEmpty(),
-										MCUtils.setHeadOwner(head, new ItemStack(Material.SKULL_ITEM, 1, (short) 3)));
-							} else {
-								target.getInventory().setItem(target.getInventory().firstEmpty(),
-										new ItemStack(Material.SKULL_ITEM, 1, (short) 3));
+                } catch (Exception e) {
+                    if (Main.plugin.getConfig().getBoolean("head.stacktrace", false)) {
 
-							}
-							target.sendMessage(Lang.GAVE_HEAD.toString().replaceAll("%target_head%", target_head));
+                        e.printStackTrace();
 
-							if (giveToOther) {
-								sender.sendMessage(
-										Lang.GAVE_HEAD_OTHER.toString().replaceAll("%target_head%", target_head)
-												.replaceAll("%target%", target.getName()));
-							}
+                    }
+                    sender.sendMessage(Lang.ERROR_ON_GIVEHEAD.toString());
 
-						} else {
-							target.sendMessage(Lang.FAILED_TO_GIVE_HEAD.toString());
+                    excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
 
-							if (giveToOther) {
-								sender.sendMessage(Lang.FAILED_TO_GIVE_HEAD.toString());
-							}
+                    // TODO: handle exception
+                }
 
-							excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
-						}
+            } else {
+                target.sendMessage(Lang.NO_SPACE_INVENTORY.toString());
+                if (giveToOther) {
+                    sender.sendMessage(
+                            Lang.NO_SPACE_OTHER_INVENTORY.toString().replaceAll("%target%", target.getName()));
+                    excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
+                }
+            }
 
-					} else {
+        }
 
-						target.sendMessage(Lang.NON_EXIST_NICKNAME.toString().replaceAll("%target_head%", target_head));
-						if (giveToOther) {
-							sender.sendMessage(
-									Lang.NON_EXIST_NICKNAME.toString().replaceAll("%target_head%", target_head));
-						}
-						excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
-					}
-				} catch (Exception e) {
-					if (Main.plugin.getConfig().getBoolean("head.stacktrace", false)) {
+    }
 
-						e.printStackTrace();
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if (!(sender.hasPermission("MineCMD.head") || sender.isOp())) {
+            sender.sendMessage(Lang.NO_PERM.toString());
+            return false;
+        }
 
-					}
-					sender.sendMessage(Lang.ERROR_ON_GIVEHEAD.toString());
+        if (args.length >= 2) {
+            if (Bukkit.getPlayer(args[1]) == null) {
+                sender.sendMessage(Lang.PlAYER_NOT_ONLINE.toString().replaceAll("%target%", args[1]));
+                return true;
+            }
 
-					excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
+            if (args.length == 2) {
 
-					// TODO: handle exception
-				}
+                Player target = Bukkit.getPlayer(args[1]);
 
-			} else {
-				target.sendMessage(Lang.NO_SPACE_INVENTORY.toString());
-				if (giveToOther) {
-					sender.sendMessage(
-							Lang.NO_SPACE_OTHER_INVENTORY.toString().replaceAll("%target%", target.getName()));
-					excute_fail_cmd(target, MCUtils.getFullCommand("/minecmd:head", args));
-				}
-			}
+                (new BukkitRunnable() {
+                    public void run() {
+                        giveHead(args[0], target, sender, false, true, args);
 
-		}
+                    }
 
-	}
+                }).runTaskAsynchronously(Main.plugin);
 
-	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (sender.hasPermission("MineCMD.head") || sender.isOp()) {
+            } else {
+                if (!(args[2].equalsIgnoreCase("true") || args[2].equalsIgnoreCase("false"))) {
+                    sender.sendMessage(Lang.NOT_BOOlEAN.toString().replaceAll("%arg%", "3"));
+                    return true;
+                }
 
-			if (args.length >= 2) {
-				if (Bukkit.getPlayer(args[1]) != null) {
-					if (args.length == 2) {
+                boolean silent = args[2].equalsIgnoreCase("true");
+                Player target = Bukkit.getPlayer(args[1]);
+                (new BukkitRunnable() {
+                    public void run() {
+                        giveHead(args[0], target, sender, silent, true, args);
 
-						Player target = Bukkit.getPlayer(args[1]);
+                    }
 
-						(new BukkitRunnable() {
-							public void run() {
-								giveHead(args[0], target, sender, false, true, args);
+                }).runTaskAsynchronously(Main.plugin);
+            }
 
-							}
+        } else if (sender instanceof Player player) {
 
-						}).runTaskAsynchronously(Main.plugin);
+            if (args.length == 0) {
 
-					} else {
-						if (args[2].equalsIgnoreCase("true") || args[2].equalsIgnoreCase("false")) {
-							boolean silent = args[2].equalsIgnoreCase("true");
-							Player target = Bukkit.getPlayer(args[1]);
-							(new BukkitRunnable() {
-								public void run() {
-									giveHead(args[0], target, sender, silent, true, args);
+                (new BukkitRunnable() {
+                    public void run() {
+                        giveHead(player.getName(), player, sender, false, false, args);
 
-								}
+                    }
 
-							}).runTaskAsynchronously(Main.plugin);
+                }).runTaskAsynchronously(Main.plugin);
 
-						} else {
-							sender.sendMessage(Lang.NOT_BOOlEAN.toString().replaceAll("%arg%", "3"));
-							return true;
+            } else {
 
-						}
+                (new BukkitRunnable() {
+                    public void run() {
+                        giveHead(args[0], player, sender, false, false, args);
 
-					}
+                    }
 
-				} else {
-					sender.sendMessage(Lang.PlAYER_NOT_ONLINE.toString().replaceAll("%target%", args[1]));
-					return true;
+                }).runTaskAsynchronously(Main.plugin);
 
-				}
+            }
 
-			} else if (sender instanceof Player) {
-				Player player = (Player) sender;
+        } else {
 
-				if (args.length == 0) {
+            sender.sendMessage(Lang.INGAME_ONLY.toString());
+            sender.sendMessage(Lang.HEAD_HELP.toString());
+            return true;
 
-					(new BukkitRunnable() {
-						public void run() {
-							giveHead(player.getName(), player, sender, false, false, args);
+        }
 
-						}
-
-					}).runTaskAsynchronously(Main.plugin);
-
-				} else {
-
-					(new BukkitRunnable() {
-						public void run() {
-							giveHead(args[0], player, sender, false, false, args);
-
-						}
-
-					}).runTaskAsynchronously(Main.plugin);
-
-				}
-
-			} else {
-
-				sender.sendMessage(Lang.INGAME_ONLY.toString());
-				sender.sendMessage(Lang.HEAD_HELP.toString());
-				return true;
-
-			}
-
-		} else {
-			sender.sendMessage(Lang.NO_PERM.toString());
-			return false;
-		}
-		return false;
-	}
+        return false;
+    }
 }

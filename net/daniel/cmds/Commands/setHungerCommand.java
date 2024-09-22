@@ -9,84 +9,71 @@ import org.bukkit.scheduler.BukkitRunnable;
 import net.daniel.cmds.main.Lang;
 import net.daniel.cmds.main.Main;
 
-public class setHungerCommand  implements CommandExecutor {
+public class setHungerCommand implements CommandExecutor {
 
 
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
-	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        // í˜„ìž¬ í¬ë§Œê° ì§€ìˆ˜ë³´ë‹¤ ë†’ê²ŒëŠ” ë¶ˆê°€ëŠ¥
 
-		// ÇöÀç Æ÷¸¸°¨ Áö¼öº¸´Ù ³ô°Ô´Â ºÒ°¡´É
-		
-		if (sender instanceof Player) {
+        if (!sender instanceof Player) {
+            System.out.println(Lang.INGAME_ONLY.toString());
+            return false;
+        }
 
-			(new BukkitRunnable() {
-				public void run() {
-					Player player = (Player) sender;
+        (new BukkitRunnable() {
+            public void run() {
+                Player player = (Player) sender;
 
-					double price = Main.getHungerPrice(player);
+                double price = Main.getHungerPrice(player);
 
-					if (args.length > 0) {
+                if (args.length <= 0) {
 
-						if (Main.isNumber(args[0])) {
+                    sender.sendMessage(Lang.HUNGER_HELP.toString().replaceAll("%price%", price + ""));
+                    return;
+                }
+                if (!Main.isNumber(args[0])) {
+                    sender.sendMessage(Lang.HUNGER_OVERFLOW.toString());
+                    return;
+                }
 
-							int level = Integer.parseInt(args[0]);
+                int level = Integer.parseInt(args[0]);
 
-							if (level > 0 && level < 20) {
+                if (!(level > 0 && level < 20)) {
+                    sender.sendMessage(Lang.HUNGER_OVERFLOW.toString());
+                    return;
 
-								int player_level = player.getFoodLevel();
+                }
+                int player_level = player.getFoodLevel();
 
-								if (player_level > level) {
+                if (player_level <= level) {
+                    sender.sendMessage(Lang.HUNGER_OVER.toString().replaceAll("%food_level%", player_level + ""));
+                    return;
 
-									if (Main.Eco.getBalance(player) >= price) {
 
-										Main.Eco.withdrawPlayer(player, price);
+                }
+                if (Main.Eco.getBalance(player) >= price) {
 
-										
-										player.setFoodLevel(level);
-										sender.sendMessage(Lang.SET_FOOD.toString().replaceAll("%level%", args[0]).replaceAll("%price%",
-												price + ""));
+                    Main.Eco.withdrawPlayer(player, price);
 
-										return;
 
-									} else {
+                    player.setFoodLevel(level);
+                    sender.sendMessage(Lang.SET_FOOD.toString().replaceAll("%level%", args[0]).replaceAll("%price%",
+                            price + ""));
 
-										double NoMoney_ = price - Main.Eco.getBalance(player);
+                } else {
 
-										sender.sendMessage(Lang.NO_MONEY.toString().replaceAll("%money_need%", NoMoney_ + "")
-												.replaceAll("%price%", price + ""));
-									}
+                    double NoMoney_ = price - Main.Eco.getBalance(player);
 
-								} else {
+                    sender.sendMessage(Lang.NO_MONEY.toString().replaceAll("%money_need%", NoMoney_ + "")
+                            .replaceAll("%price%", price + ""));
+                }
+            }
 
-									sender.sendMessage(Lang.HUNGER_OVER.toString().replaceAll("%food_level%", player_level + ""));
+        }).runTaskAsynchronously(Main.plugin);
+        return true;
 
-								}
-
-							} else {
-								sender.sendMessage(Lang.HUNGER_OVERFLOW.toString());
-
-							}
-
-						} else {
-							sender.sendMessage(Lang.HUNGER_OVERFLOW.toString());
-						}
-
-					} else {
-
-						sender.sendMessage(Lang.HUNGER_HELP.toString().replaceAll("%price%", price + ""));
-
-					}
-
-				}
-
-			}).runTaskAsynchronously(Main.plugin);
-			return true;
-
-		} else {
-			System.out.println(Lang.INGAME_ONLY.toString());
-			return false;
-		}
-	}
+    }
 
 }
